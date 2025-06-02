@@ -1,0 +1,30 @@
+pipelines:
+  branches:
+    development:
+      #- step:
+      #      name: Testing t500-integration-microservices code using sonarqube
+      #      script:
+      #        - echo "Sonar pipeline running..."
+      #        - curl --insecure -OL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip
+      #        - unzip sonar-scanner-cli-4.4.0.2170-linux.zip
+      #        - rm sonar-scanner-cli-4.4.0.2170-linux.zip
+      #        - bash ./sonar-scanner-4.4.0.2170-linux/bin/sonar-scanner -Dsonar.projectKey=Canvas-Backend -Dsonar.sources=. -Dsonar.host.url=https://$SONARQUBE_IP -Dsonar.login=$SONAR_USER_NAME -Dsonar.password=$SONAR_PASSWORD
+              
+      
+      - step:
+          name: building t500-integration-microservices code
+          image: mesosphere/aws-cli
+          services:
+            - docker
+          script:
+            - docker build --no-cache -t ${AWS_REGISTRY_URL}:$BITBUCKET_BRANCH . #for current account           
+#            - docker build --no-cache -t ${AWS_REGISTRY_URL}:celery -f DockerfileCeleryWorker .
+            # aws login
+            #- eval $(aws ecr get-login --region {AWS_DEFAULT_REGION} --no-include-email --debug)
+            - eval $(aws ecr get-login --region ${AWS_DEFAULT_REGION} --no-include-email) #for current account
+            - docker push ${AWS_REGISTRY_URL}:$BITBUCKET_BRANCH #for current account
+#            - docker push ${AWS_REGISTRY_URL}:celery
+#      - step:
+#         script:
+#           - ssh ec2-user@$MACHINE_IP ansible-playbook /etc/ansible/roles/ats-backend.yml
+      #     - ssh ec2-user@$MACHINE_IP ansible-playbook /etc/ansible/roles/celery.yml 
