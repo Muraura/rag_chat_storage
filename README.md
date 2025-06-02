@@ -1,29 +1,50 @@
-# README #
+# Chat API Service
 
-This README would normally document whatever steps are necessary to get your application up and running.
+A FastAPI-based service to manage chat sessions and chat messages.
 
-### What is this repository for? ###
+---
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+## Getting Started
 
-### How do I get set up? ###
+### Prerequisites
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+- Docker
+- Docker Compose
 
-### Contribution guidelines ###
+---
 
-* Writing tests
-* Code review
-* Other guidelines
+## Setup and Run
 
-### Who do I talk to? ###
+1. Clone the repository:
 
-* Repo owner or admin
-* Other community or team contact
+git clone https://github.com/Muraura/rag_chat_storage.git
+cd rag_chat_storage
+
+2.Create a .env file
+3.Start the application:
+
+docker-compose up --build
+
+API Endpoints
+Chat Sessions
+GET /chat_sessions/
+List all chat sessions (optionally filter by user_id)
+
+POST /chat_sessions/
+Create a new chat session
+
+PATCH /chat_sessions/{session_id}
+Update a chat session (e.g., name or is_favorite)
+
+DELETE /chat_sessions/{session_id}
+Delete a chat session
+
+Chat Messages
+GET /chat_messages/?session_id=xxx
+List all messages for a specific session
+
+POST /chat_messages/
+Add a new message to a session
+
+Swagger UI available at:
+http://localhost:8000/docs
