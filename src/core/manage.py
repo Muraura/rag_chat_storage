@@ -34,7 +34,7 @@ def database() -> None:
 
 
 app: FastAPI = create_app()
-app.include_router(api_router, prefix="/integration-service/api")
+app.include_router(api_router, prefix="/rag_chat_storage/api")
 
 LOGGER.info("Initialize CORS configurations ...")
 

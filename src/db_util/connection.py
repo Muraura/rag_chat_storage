@@ -38,6 +38,7 @@ class CommunicationsSQLAlchemyConnectionManagerReadOnly(metaclass=Singleton):
             pool_size=5,
             pool_recycle=1800,
         )
+        print("dbstringghuuuu",self.engine)
         self.Session = sessionmaker(bind=self.engine)
 
     def __init__(self):

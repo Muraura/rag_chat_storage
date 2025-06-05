@@ -15,6 +15,7 @@ router = APIRouter()
 
 @router.post("/", dependencies=[Depends(get_api_key)])
 async def create_user(payload: dict, db: Session = Depends(get_db)):
+    print("nmmnnnnn")
     validation_list = [
         {"field": "email", "alias": "Email"}
     ]
@@ -22,7 +23,7 @@ async def create_user(payload: dict, db: Session = Depends(get_db)):
     messages = validation_util.field_validation(payload, validation_list)
     if messages:
         return JSONResponse(content={"detail": messages}, status_code=400)
-
+    print("ffndjddjj")
     try:
         payload["id"] = str(uuid4())
 
