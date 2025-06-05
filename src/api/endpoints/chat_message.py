@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from uuid import uuid4, UUID
 from datetime import datetime
+from fastapi.encoders import jsonable_encoder
+from fastapi import Query
 
 import logging
 logger = logging
@@ -41,7 +43,6 @@ async def add_chat_message(
         return JSONResponse(content={"detail": "Invalid session_id format"}, status_code=400)
 
     try:
-        # Check if session exists
         session = await mysql_query_utils.get_field_details(
             db=db,
             query_model=ChatSession,
@@ -71,46 +72,76 @@ async def add_chat_message(
 
 
 @router.get("/session/{session_id}", dependencies=[Depends(get_api_key)])
-async def get_chat_messages(session_id: str, db: Session = Depends(get_db)):
+@limiter.limit("20/minute")
+async def get_chat_messages(
+    request: Request,
+    session_id: str,
+    limit: int = Query(20, gt=0, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
     try:
         try:
-            UUID(session_id)
+            session_uuid = UUID(session_id)
         except ValueError:
+            logger.warning(f"Invalid session_id format: {session_id}")
             return JSONResponse(content={"detail": "Invalid session_id format"}, status_code=400)
-
-        # Verify session exists
         session_exists = await mysql_query_utils.get_field_details(
-            db, ChatSession, filters={"id": session_id}
+            db=db,
+            query_model=ChatSession,
+            query_object={"id": str(session_uuid)},
+            get_field="id"
         )
         if not session_exists:
+            logger.info(f"Chat session not found for session_id={session_id}")
             return JSONResponse(content={"detail": "Chat session not found"}, status_code=404)
+        query = db.query(ChatMessage).filter_by(session_id=str(session_uuid))
+        total = query.count()
+        messages = query.order_by(ChatMessage.created_at).offset(offset).limit(limit).all()
 
-        filters = {"session_id": session_id}
-        messages = await mysql_query_utils.get_all_field_details(db, ChatMessage, filters)
+        logger.info(f"Fetched {len(messages)} messages for session_id={session_id}")
+        return {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "messages": jsonable_encoder(messages)
+        }
 
-        return {"messages": messages}
     except Exception as e:
-        logger.error(f"#chat_message.py #get_chat_messages #Exception: {e}", exc_info=True)
+        logger.error(f"Exception in get_chat_messages: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get chat messages")
 
 
-@router.delete("/{message_id}", dependencies=[Depends(get_api_key), Depends(limiter.limit("10/minute"))])
-async def delete_chat_message(message_id: str, db: Session = Depends(get_db)):
+@router.delete(
+    "/{message_id}",
+    dependencies=[Depends(get_api_key)],
+)
+@limiter.limit("10/minute")
+async def delete_chat_message(
+    request: Request,
+    message_id: str,
+    db: Session = Depends(get_db)
+):
     try:
-        # Validate message_id format
         try:
             UUID(message_id)
         except ValueError:
+            logger.warning(f"Invalid message_id format: {message_id}")
             return JSONResponse(content={"detail": "Invalid message_id format"}, status_code=400)
-
-        deleted = await mysql_query_utils.delete_field_details(
-            db, ChatMessage, filters={"id": message_id}
+        deleted = mysql_query_utils.delete_field_details(
+            db=db,
+            model=ChatMessage,
+            filters={"id": message_id}
         )
+
         if not deleted:
+            logger.info(f"Message not found for deletion: {message_id}")
             return JSONResponse(content={"detail": "Message not found"}, status_code=404)
 
-        logger.info(f"#chat_message.py #delete_chat_message #Deleted message {message_id}")
+        logger.info(f"Message deleted successfully: {message_id}")
         return {"detail": "Message deleted successfully"}
+
     except Exception as e:
-        logger.error(f"#chat_message.py #delete_chat_message #Exception: {e}", exc_info=True)
+        logger.error(f"Exception in delete_chat_message: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete chat message")
+
