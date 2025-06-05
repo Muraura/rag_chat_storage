@@ -90,7 +90,4 @@ class FactoryConfig:
         self.env_state = env_state
 
     def __call__(self):
-        # if self.env_state == "PRODUCTION":
-        #     return ProdAPISettings()
-        # else:
         return ProdAPISettings()

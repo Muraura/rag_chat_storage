@@ -121,14 +121,26 @@ async def delete_chat_session(
 async def list_chat_sessions(
     request: Request,
     user_id: str = None,
+    limit: int = 10,
+    offset: int = 0,
     db: Session = Depends(get_db),
     api_key: str = Depends(get_api_key)
 ):
     try:
         filters = {"user_id": user_id} if user_id else {}
-        sessions = await mysql_query_utils.get_all_field_details(db, ChatSession, filters)
+        query = db.query(ChatSession).filter_by(**filters).order_by(ChatSession.created_at.desc())
 
-        return {"sessions": sessions}
+        total = query.count()
+        paginated_sessions = query.offset(offset).limit(limit).all()
+
+        return {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "sessions": [session.__dict__ for session in paginated_sessions]
+        }
+
     except Exception as e:
         logger.error(f"#chat_sessions.py #list_chat_sessions #Exception: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list chat sessions")
+

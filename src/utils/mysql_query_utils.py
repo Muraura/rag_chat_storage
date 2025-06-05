@@ -37,25 +37,28 @@ async def get_field_details(db: Session, query_model, query_object, get_field):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-async def get_all_field_details(db: Session, query_model, query_object, *get_fields):
+def get_all_field_details(db: Session, query_model, query_object, *get_fields):
     try:
         query_result = db.query(query_model).filter_by(**query_object)
         if get_fields:
             query_result = query_result.with_entities(*get_fields)
-            query_result = query_result.all()
-        logger.info(
-            f"#mysql_query_utils.py #get_all_field_details #successfully fetched all field details")
+        query_result = query_result.all()
+
+        logger.info(f"#mysql_query_utils.py #get_all_field_details #successfully fetched all field details")
         return query_result
     except NoResultFound:
         logger.info(
-            f"#mysql_query_utils.py #get_all_field_details #query did not return any result query_model, {query_model},"
-            f"query_object,{query_object}, ")
-        return None
+            f"#mysql_query_utils.py #get_all_field_details #query did not return any result query_model: {query_model}, "
+            f"query_object: {query_object}"
+        )
+        return []
     except Exception as e:
         logger.error(
-            f"#mysql_query_utils.py  #get_field_details #exception_getting_query_object_details #Exception, {e}",
-            exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            f"#mysql_query_utils.py #get_all_field_details #exception #Exception: {e}",
+            exc_info=True
+        )
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 async def create_field_details(db: Session, query_model, query_object):
