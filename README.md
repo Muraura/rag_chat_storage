@@ -1,4 +1,5 @@
 # Chat API Service
+POSTMAN Collection Link : https://api.postman.com/collections/6199074-7351beef-3bb6-4ca3-b271-fe1aa9ad1e1f?access_key=PMAT-01JWZNTCTKH0DGRC69PYJ3G6NR     
 
 A FastAPI-based service to manage chat sessions and chat messages.
 
